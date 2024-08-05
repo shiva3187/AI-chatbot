@@ -2,11 +2,15 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import url, { fileURLToPath } from "url";
+import dotenv from "dotenv";
 import ImageKit from "imagekit";
 import mongoose from "mongoose";
 import Chat from "./models/chat.js";
 import UserChats from "./models/userChats.js";
 import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
+
+// Load environment variables from .env file
+dotenv.config();
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -16,7 +20,8 @@ const __dirname = path.dirname(__filename);
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    // origin: process.env.CLIENT_URL,
+    origin: "*",
     credentials: true,
   })
 );
@@ -31,6 +36,15 @@ const connect = async () => {
     console.log(err);
   }
 };
+
+// Ensure environment variables are loaded correctly
+console.log("IMAGE_KIT_ENDPOINT:", process.env.IMAGE_KIT_ENDPOINT);
+console.log("IMAGE_KIT_PUBLIC_KEY:", process.env.IMAGE_KIT_PUBLIC_KEY);
+console.log("IMAGE_KIT_PRIVATE_KEY:", process.env.IMAGE_KIT_PRIVATE_KEY);
+
+if (!process.env.IMAGE_KIT_ENDPOINT || !process.env.IMAGE_KIT_PUBLIC_KEY || !process.env.IMAGE_KIT_PRIVATE_KEY) {
+  throw new Error('Missing ImageKit configuration');
+}
 
 const imagekit = new ImageKit({
   urlEndpoint: process.env.IMAGE_KIT_ENDPOINT,
@@ -156,13 +170,13 @@ app.use((err, req, res, next) => {
 });
 
 // PRODUCTION
-app.use(express.static(path.join(__dirname, "../client/dist")));
+app.use(express.static(path.join(__dirname, "../client")));
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/dist", "index.html"));
+  res.sendFile(path.join(__dirname, "../client", "index.html"));
 });
 
 app.listen(port, () => {
   connect();
-  console.log("Server running on 3000");
+  console.log(`Server running on port ${port}`);
 });
